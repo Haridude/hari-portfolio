@@ -321,11 +321,15 @@ const contactForm = document.getElementById("contactForm");
 const formStatus = document.getElementById("formStatus");
 
 if (contactForm && formStatus) {
-  contactForm.addEventListener("submit", (event) => {
+  const submitButton = contactForm.querySelector('button[type="submit"]');
+
+  contactForm.addEventListener("submit", async (event) => {
     event.preventDefault();
 
     const formData = new FormData(contactForm);
     const name = String(formData.get("name") || "").trim();
+    const email = String(formData.get("email") || "").trim();
+    const project = String(formData.get("project") || "").trim();
 
     if (!name) {
       formStatus.textContent = "Please add your name before sending.";
@@ -333,9 +337,52 @@ if (contactForm && formStatus) {
       return;
     }
 
-    formStatus.textContent = `Thanks ${name}! Your project brief has been received.`;
-    formStatus.className = "form-status success";
-    contactForm.reset();
+    if (!email) {
+      formStatus.textContent = "Please add your email before sending.";
+      formStatus.className = "form-status error";
+      return;
+    }
+
+    if (!project) {
+      formStatus.textContent = "Please add a few details about your project.";
+      formStatus.className = "form-status error";
+      return;
+    }
+
+    formStatus.textContent = "Sending your message to Hari...";
+    formStatus.className = "form-status";
+
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.setAttribute("aria-busy", "true");
+    }
+
+    try {
+      const response = await fetch(contactForm.action, {
+        method: "POST",
+        body: formData,
+        headers: {
+          Accept: "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`FormSubmit returned ${response.status}`);
+      }
+
+      formStatus.textContent = `Thanks ${name}! Your message has been sent to hari12krishnavr12@gmail.com.`;
+      formStatus.className = "form-status success";
+      contactForm.reset();
+    } catch (error) {
+      console.error(error);
+      formStatus.textContent = "I couldn't send the form right now. Please try again or use WhatsApp.";
+      formStatus.className = "form-status error";
+    } finally {
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.removeAttribute("aria-busy");
+      }
+    }
   });
 }
 
